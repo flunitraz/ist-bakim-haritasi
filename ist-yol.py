@@ -24,4 +24,4 @@ st.header('Verileri Güncelle')
 if st.button('Güncelle'):
     tum_veriler, gunluk_veriler = update()
     
-st.write(gunluk_veriler)
+st.write(tum_veriler)

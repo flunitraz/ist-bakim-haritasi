@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 from datetime import date,timedelta
-import time
 import streamlit as st
 import pydeck as pdk
 
@@ -63,7 +62,7 @@ for i in gunluk_veriler.index:
     gunluk_veriler["icon_data"][i] = icon_data
 
 
-
+map_s={"Koyu Mod":"dark","Yol Haritası":"road","Uydu Görüntüsü":"satellite"}
 
 tab1, tab2, tab3= st.tabs(["Son Çalışmalar", "Haritada Göster","Tüm Verileri İncele"])
 
@@ -72,10 +71,17 @@ with tab1:
     st.text(str(gunluk_veriler.tarih[0]) + " tarihine ait toplam " + str(len(gunluk_veriler)) +" adet yol çalışması verisi bulunmaktadır.")
 
 with tab2:
+   col1, col2 = st.columns(2)
+   with col1:
+       st.text("Harita Modu Seç")
+   with col2: 
+       s = st.selectbox("",("Koyu Mod","Yol Haritası","Uydu Görüntüsü"),label_visibility="collapsed")
+   
+   
    st.pydeck_chart(pdk.Deck(
        
        map_provider="mapbox",
-       map_style="road",
+       map_style=map_s[s],
        initial_view_state=pdk.ViewState(
            latitude=41.1,
            longitude=28.9,
@@ -98,6 +104,8 @@ with tab2:
    ))
    
    st.text("Yukarıdaki haritada " + str(gunluk_veriler.tarih[0]) + " tarihine ait veriler gösterilmektedir.")
+   
+   
 
 with tab3:
     col1, col2 = st.columns(2)

@@ -58,8 +58,8 @@ def get_directions_response(lat1, long1, lat2, long2, mode='drive'):
 def rota_olustur(x,y):
    
     geolocator = Nominatim(user_agent="MyApp")    
-    locationx = geolocator.geocode(x + "türkiye")
-    locationy = geolocator.geocode(y + "türkiye")
+    locationx = geolocator.geocode(x + " türkiye")
+    locationy = geolocator.geocode(y + " türkiye")
     
     response = get_directions_response(locationx.latitude, locationx.longitude, locationy.latitude, locationy.longitude)    
     j = response.json()

@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import date,timedelta
 import streamlit as st
 import pydeck as pdk
+from geopy.geocoders import Nominatim
 
 def guncelle():
     today = date.today()
@@ -20,8 +21,7 @@ def guncelle():
         data.append(d)
         
     tum_veriler = pd.DataFrame(data)
-       
-    
+         
     tum_veriler.loc[tum_veriler["gece"] == "EVET" , "gece"] = "Gece"
     tum_veriler.loc[tum_veriler["gece"] == "HAYIR" , "gece"] = "Gündüz"
     
@@ -31,6 +31,7 @@ def guncelle():
         gunluk_veriler = tum_veriler[tum_veriler.tarih == yesterday]
 
     return tum_veriler, gunluk_veriler
+
 
 def st_df(dataframe,d):
     df = dataframe[["ilce","isin_adi","tarih","gece"]]
@@ -43,9 +44,33 @@ def st_df(dataframe,d):
     return df
     
     
-    
-tum_veriler, gunluk_veriler = guncelle()
+def get_directions_response(lat1, long1, lat2, long2, mode='drive'):
+    url = "https://route-and-directions.p.rapidapi.com/v1/routing"
+    querystring = {"waypoints": f"{str(lat1)},{str(long1)}|{str(lat2)},{str(long2)}", "mode": "drive"}
+    headers = {
+        "X-RapidAPI-Key": "889d5281acmsh9a8b0e8a6bdfce3p188328jsna791960c7d91",
+        "X-RapidAPI-Host": "route-and-directions.p.rapidapi.com"
+    }
+    response = requests.request("GET", url, headers=headers, params=querystring)
+    return response
 
+
+def rota_olustur(x,y):
+   
+    geolocator = Nominatim(user_agent="MyApp")    
+    locationx = geolocator.geocode(x)
+    locationy = geolocator.geocode(y)
+    
+    response = get_directions_response(locationx.latitude, locationx.longitude, locationy.latitude, locationy.longitude)    
+    j = response.json()
+    j = j["features"][0]["geometry"]["coordinates"]
+    
+    pathdf = pd.DataFrame()
+    pathdf["koor"] = j
+    pathdf["color"] = [(255,0,0)]
+    return(pathdf)
+
+tum_veriler, gunluk_veriler = guncelle()
 
 
 ICON_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Road_works_ahead_PW03_2_01.png/242px-Road_works_ahead_PW03_2_01.png"
@@ -64,6 +89,21 @@ for i in gunluk_veriler.index:
 
 map_s={"Koyu Mod":"dark","Yol Haritası":"road","Uydu Görüntüsü":"satellite"}
 
+
+st.set_page_config(
+    page_title="İstanbul Bakım Haritası",
+    layout="wide",
+)
+
+
+with st.sidebar:
+    st.title("Rota Oluştur")
+    x=st.text_input("Nereden",value="istanbul")
+    y=st.text_input("Nereye",value="istanbul")
+    pathdf=rota_olustur(x,y)
+   
+
+
 tab1, tab2, tab3= st.tabs(["Son Çalışmalar", "Haritada Göster","Tüm Verileri İncele"])
 
 with tab1:      
@@ -74,10 +114,10 @@ with tab2:
    col1, col2 = st.columns(2)
    with col1:
        st.text("Harita Modu Seç")
+       
    with col2: 
        s = st.selectbox("",("Koyu Mod","Yol Haritası","Uydu Görüntüsü"),label_visibility="collapsed")
-   
-   
+       
    st.pydeck_chart(pdk.Deck(
        
        map_provider="mapbox",
@@ -89,7 +129,16 @@ with tab2:
            pitch=0,
            bearing=0,
        ),
-       layers=[
+       layers=[          
+           pdk.Layer(
+               type="PathLayer",
+               data=pathdf,
+               get_color="color",
+               width_scale=10,
+               width_min_pixels=2,
+               get_path="koor",
+               get_width=5,             
+               ),
            pdk.Layer(
                'IconLayer',
                data=gunluk_veriler,
@@ -101,8 +150,7 @@ with tab2:
            ),
        ],
        tooltip={"text": "{isin_adi}\n{gece}"}
-   ))
-   
+   ))  
    st.text("Yukarıdaki haritada " + str(gunluk_veriler.tarih[0]) + " tarihine ait veriler gösterilmektedir.")
    
    
@@ -121,3 +169,4 @@ with tab3:
     else:
         stdf = st.dataframe(data=st_df(tum_veriler,d), width=None, height=None, use_container_width=True)
         st.text(str(d) + " tarihine ait toplam " + str(len(st_df(tum_veriler,d)))+ " adet yol çalışması verisi bulunmaktadır.")
+        

@@ -93,6 +93,7 @@ map_s={"Koyu Mod":"dark","Yol Haritası":"road","Uydu Görüntüsü":"satellite"
 st.set_page_config(
     page_title="İstanbul Bakım Haritası",
     layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 

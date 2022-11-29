@@ -20,6 +20,11 @@ def guncelle():
         data.append(d)
         
     tum_veriler = pd.DataFrame(data)
+       
+    
+    tum_veriler.loc[tum_veriler["gece"] == "EVET" , "gece"] = "Gece"
+    tum_veriler.loc[tum_veriler["gece"] == "HAYIR" , "gece"] = "Gündüz"
+    
     gunluk_veriler = tum_veriler[tum_veriler.tarih == today]
     
     if(len(gunluk_veriler)==0):
@@ -27,37 +32,88 @@ def guncelle():
 
     return tum_veriler, gunluk_veriler
 
-st.header('Verileri Güncelle')
-if st.button('Güncelle'):
-    tum_veriler, gunluk_veriler = guncelle()
-
-def yazdir(dataframe):
-    df = dataframe[["ilce","isin_adi","tarih"]]
-    df.columns=["İlçe","İşin Adı","Tarih"]
+def st_df(dataframe,d):
+    df = dataframe[["ilce","isin_adi","tarih","gece"]]
+    df.columns=["İlçe","İşin Adı","Tarih","Vakit"]
+    
+    if(d!="gunluk"):
+        tarih = d.strftime("%d-%m-%Y")
+        df = df[df.Tarih==tarih]
+    df = df.set_index("Tarih")
     return df
     
     
+    
 tum_veriler, gunluk_veriler = guncelle()
-st.write(yazdir(gunluk_veriler))
-
-st.map(gunluk_veriler[["lat","lon","tarih"]])
 
 
-st.pydeck_chart(pdk.Deck(
-    map_style=None,
-    initial_view_state=pdk.ViewState(
-        latitude=24.76,
-        longitude=-24.4,
-        zoom=11,
-        pitch=50,
-    ),
-    layers=[
-        pdk.Layer(
-            'ScatterplotLayer',
-            data=gunluk_veriler,
-            get_position='[lon, lat]',
-            get_color='[200, 30, 0, 160]',
-            get_radius=200,
-        ),
-    ],
-))
+
+ICON_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Road_works_ahead_PW03_2_01.png/242px-Road_works_ahead_PW03_2_01.png"
+
+icon_data = {
+    "url": ICON_URL,
+    "width": 242,
+    "height": 242,
+    "anchorY": 242,
+}
+
+gunluk_veriler["icon_data"] = None
+for i in gunluk_veriler.index:
+    gunluk_veriler["icon_data"][i] = icon_data
+
+
+
+
+
+tab1, tab2, tab3= st.tabs(["Son Çalışmalar", "Haritada Göster","Tüm Verileri İncele"])
+
+with tab1:      
+    st.dataframe(data=st_df(gunluk_veriler,"gunluk"), width=None, height=None, use_container_width=True)
+
+with tab2:
+   st.pydeck_chart(pdk.Deck(
+       
+       map_provider="mapbox",
+       map_style="road",
+       initial_view_state=pdk.ViewState(
+           latitude=41.1,
+           longitude=28.9,
+           zoom=8,
+           pitch=0,
+       ),
+       layers=[
+           pdk.Layer(
+               'IconLayer',
+               data=gunluk_veriler,
+               get_position='[lon, lat]',
+               get_icon="icon_data",
+               get_size=4,
+               size_scale=12,
+               pickable=True,
+           ),
+       ],
+       tooltip={"text": "{isin_adi}\n{gece}"}
+   ))
+
+with tab3:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.text("Tarih Seç")
+    with col2:
+        d = st.date_input("",label_visibility="collapsed",
+                          min_value = date(2022, 10, 1),
+                          max_value = date.today())
+        
+    if(len(st_df(tum_veriler,d))==0):
+        st.text(str(d) + " tarihine ait veri bulunamadı.")
+    else:
+        stdf = st.dataframe(data=st_df(tum_veriler,d), width=None, height=None, use_container_width=True)
+    
+     
+if st.button('Verileri Güncellemek İçin Tıkla'):
+    tum_veriler, gunluk_veriler = guncelle()
+    gunluk_veriler["icon_data"] = None
+    for i in gunluk_veriler.index:
+        gunluk_veriler["icon_data"][i] = icon_data
+        
+        

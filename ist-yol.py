@@ -104,13 +104,9 @@ with st.sidebar:
    
 
 
-tab1, tab2, tab3= st.tabs(["Son Çalışmalar", "Haritada Göster","Tüm Verileri İncele"])
+tab1, tab2, tab3= st.tabs(["Haritada Göster","Son Çalışmalar","Tüm Verileri İncele"])
 
-with tab1:      
-    st.dataframe(data=st_df(gunluk_veriler,"gunluk"), width=None, height=None, use_container_width=True)
-    st.text(str(gunluk_veriler.tarih[0]) + " tarihine ait toplam " + str(len(gunluk_veriler)) +" adet yol çalışması verisi bulunmaktadır.")
-
-with tab2:
+with tab1:
    col1, col2 = st.columns(2)
    with col1:
        st.text("Harita Modu Seç")
@@ -154,6 +150,10 @@ with tab2:
    st.text("Yukarıdaki haritada " + str(gunluk_veriler.tarih[0]) + " tarihine ait veriler gösterilmektedir.")
    
    
+with tab2:      
+    st.dataframe(data=st_df(gunluk_veriler,"gunluk"), width=None, height=None, use_container_width=True)
+    st.text(str(gunluk_veriler.tarih[0]) + " tarihine ait toplam " + str(len(gunluk_veriler)) +" adet yol çalışması verisi bulunmaktadır.")
+
 
 with tab3:
     col1, col2 = st.columns(2)

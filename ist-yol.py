@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 from datetime import date,timedelta
+import time
 import streamlit as st
 import pydeck as pdk
 
@@ -64,11 +65,11 @@ for i in gunluk_veriler.index:
 
 
 
-
 tab1, tab2, tab3= st.tabs(["Son Çalışmalar", "Haritada Göster","Tüm Verileri İncele"])
 
 with tab1:      
     st.dataframe(data=st_df(gunluk_veriler,"gunluk"), width=None, height=None, use_container_width=True)
+    st.text(str(gunluk_veriler.tarih[0]) + " tarihine ait toplam " + str(len(gunluk_veriler)) +" adet yol çalışması verisi bulunmaktadır.")
 
 with tab2:
    st.pydeck_chart(pdk.Deck(
@@ -80,6 +81,7 @@ with tab2:
            longitude=28.9,
            zoom=8,
            pitch=0,
+           bearing=0,
        ),
        layers=[
            pdk.Layer(
@@ -94,6 +96,8 @@ with tab2:
        ],
        tooltip={"text": "{isin_adi}\n{gece}"}
    ))
+   
+   st.text("Yukarıdaki haritada " + str(gunluk_veriler.tarih[0]) + " tarihine ait veriler gösterilmektedir.")
 
 with tab3:
     col1, col2 = st.columns(2)
@@ -108,12 +112,4 @@ with tab3:
         st.text(str(d) + " tarihine ait veri bulunamadı.")
     else:
         stdf = st.dataframe(data=st_df(tum_veriler,d), width=None, height=None, use_container_width=True)
-    
-     
-if st.button('Verileri Güncellemek İçin Tıkla'):
-    tum_veriler, gunluk_veriler = guncelle()
-    gunluk_veriler["icon_data"] = None
-    for i in gunluk_veriler.index:
-        gunluk_veriler["icon_data"][i] = icon_data
-        
-        
+        st.text(str(d) + " tarihine ait toplam " + str(len(st_df(tum_veriler,d)))+ " adet yol çalışması verisi bulunmaktadır.")
